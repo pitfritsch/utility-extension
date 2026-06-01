@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Super Tools",
+  "version": "1.0",
+  "description": "Noturno | Galeria | Vídeos | Unfollowers",
+  "icons": { "128": "icon.png" },
+  "action": { "default_popup": "popup.html" },
+  "permissions": ["scripting", "activeTab", "storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

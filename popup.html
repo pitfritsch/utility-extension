@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 280px;
+        padding: 15px;
+        background: #111;
+        text-align: center;
+        font: bold 16px Arial;
+      }
+      button {
+        width: 100%;
+        padding: 18px;
+        margin: 8px 0;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        color: white;
+        transition: 0.3s;
+      }
+      #darkBtn {
+        background: #333;
+      }
+      #darkBtn.on {
+        background: #00cc66;
+      }
+      #imgBtn {
+        background: #0066cc;
+      }
+      #vidBtn {
+        background: #cc6600;
+      }
+      #vidBtn.on {
+        background: #00cc00;
+      }
+      #unfBtn {
+        background: #8e44ad;
+      }
+      #loadBtn {
+        background: #e67e22;
+      }
+      #loadBtn.on {
+        background: #27ae60;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="darkBtn">MODO NOTURNO: DESLIGADO</button>
+    <button id="imgBtn">GALERIA (FOTOS + VÍDEOS)</button>
+    <button id="vidBtn">VÍDEOS LIVRES: DESLIGADO</button>
+    <button id="unfBtn">UNFOLLOWERS CHECK</button>
+    <button id="loadBtn">CARREGAR TUDO</button>
+    <script src="popup.js"></script>
+  </body>
+</html>
