@@ -31,6 +31,25 @@ function enableVideoControlsAndClean() {
     .querySelectorAll('div[data-visualcompletion="ignore"]')
     .forEach((div) => div.remove());
 }
+function vidOnEnable() {
+  if (vidObserver) return;
+  enableVideoControlsAndClean();
+  vidObserver = new MutationObserver(enableVideoControlsAndClean);
+  vidObserver.observe(document.body, { childList: true, subtree: true });
+}
+function vidOffDisable() {
+  vidObserver?.disconnect();
+  vidObserver = null;
+  document.querySelectorAll("video").forEach((v) => {
+    v.controls = false;
+    v.controlsList = "nodownload";
+    v.removeAttribute("data-controls-enabled");
+  });
+}
+function toggleVidLivres() {
+  if (vidObserver) vidOffDisable();
+  else vidOnEnable();
+}
 
 // === 3. UNFOLLOWERS (ID 8204589369) ===
 function unfollowers() {
@@ -213,21 +232,8 @@ chrome.runtime.onMessage.addListener((m) => {
   if (m.cmd === "loadAll") loadAll();
 
   // VÍDEOS LIVRES
-  if (m.cmd === "vidOn") {
-    if (vidObserver) return;
-    enableVideoControlsAndClean();
-    vidObserver = new MutationObserver(enableVideoControlsAndClean);
-    vidObserver.observe(document.body, { childList: true, subtree: true });
-  }
-  if (m.cmd === "vidOff") {
-    vidObserver?.disconnect();
-    vidObserver = null;
-    document.querySelectorAll("video").forEach((v) => {
-      v.controls = false;
-      v.controlsList = "nodownload";
-      v.removeAttribute("data-controls-enabled");
-    });
-  }
+  if (m.cmd === "vidOn") vidOnEnable();
+  if (m.cmd === "vidOff") vidOffDisable();
 });
 
 // Botão verde quando termina
@@ -235,3 +241,28 @@ chrome.runtime.onMessage.addListener((m) => {
   if (m.cmd === "loadDone")
     chrome.runtime.sendMessage({ cmd: "updateLoadButton" });
 });
+
+// === ATALHOS (Ctrl+Shift+letra | Cmd+Shift+letra no Mac) ===
+document.addEventListener(
+  "keydown",
+  (e) => {
+    if ((!e.ctrlKey && !e.metaKey) || !e.shiftKey || e.altKey) return;
+    const t = e.target;
+    if (
+      t instanceof HTMLInputElement ||
+      t instanceof HTMLTextAreaElement ||
+      t.isContentEditable
+    )
+      return;
+
+    const shortcuts = {
+      g: galeria,
+      v: toggleVidLivres,
+    };
+    const action = shortcuts[e.key.toLowerCase()];
+    if (!action) return;
+    e.preventDefault();
+    action();
+  },
+  true
+);
