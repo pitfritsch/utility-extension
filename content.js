@@ -73,6 +73,7 @@ function openPlayingVideoInNewTab() {
   });
   const src = getVideoSrc(video);
   if (!src) return alert("URL do vídeo não encontrada.");
+  video.pause();
   window.open(src, "_blank");
 }
 
