@@ -50,6 +50,31 @@ function toggleVidLivres() {
   if (vidObserver) vidOffDisable();
   else vidOnEnable();
 }
+function getVideoSrc(video) {
+  if (video.currentSrc) return video.currentSrc;
+  if (video.src) return video.src;
+  return video.querySelector("source[src]")?.src || null;
+}
+function openPlayingVideoInNewTab() {
+  const playing = [...document.querySelectorAll("video")].filter(
+    (v) => !v.paused && !v.ended && v.readyState >= 2
+  );
+  if (!playing.length) return alert("Nenhum vídeo reproduzindo.");
+  const video = playing.reduce((best, v) => {
+    const r = v.getBoundingClientRect();
+    const area =
+      Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) *
+      Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0));
+    const br = best.getBoundingClientRect();
+    const bestArea =
+      Math.max(0, Math.min(br.bottom, innerHeight) - Math.max(br.top, 0)) *
+      Math.max(0, Math.min(br.right, innerWidth) - Math.max(br.left, 0));
+    return area > bestArea ? v : best;
+  });
+  const src = getVideoSrc(video);
+  if (!src) return alert("URL do vídeo não encontrada.");
+  window.open(src, "_blank");
+}
 
 // === 3. UNFOLLOWERS (ID 8204589369) ===
 function unfollowers() {
@@ -155,79 +180,123 @@ async function loadAll() {
     botao.click();
     await new Promise((r) => setTimeout(r, 5000));
   }
-  alert("🎉 TUDO CARREGADO!\nAgora abre a GALERIA!");
+  alert("🎉 TUDO CARREGADO!\nAgora abre a GALERIA DE FOTOS ou VÍDEOS!");
   chrome.runtime.sendMessage({ cmd: "loadDone" });
 }
 
-// === 5. GALERIA ORIGINAL ===
-function galeria() {
-  (() => {
-    const imgs = Array.from(document.querySelectorAll("img"));
-    const srcs = imgs.map((i) => i.src).filter(Boolean);
-    document.head.innerHTML = "";
-    document.body.innerHTML = "";
-    const h = document.createElement("h2");
-    h.textContent = `Extracted images (${srcs.length})`;
-    h.style.cssText = "font-family:sans-serif;text-align:center;margin:20px 0;";
-    document.body.appendChild(h);
-    const gallery = document.createElement("div");
-    gallery.style.cssText =
-      "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;padding:20px;";
-    document.body.appendChild(gallery);
-    const modal = document.createElement("div");
-    modal.style.cssText =
-      "display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);justify-content:center;align-items:center;z-index:9999;cursor:pointer;padding:2vh;";
-    const modalImg = document.createElement("img");
-    modalImg.style.cssText =
-      "max-height:96vh;max-width:96vw;object-fit:contain;border-radius:8px;box-shadow:0 0 30px rgba(0,0,0,0.6);";
-    modal.appendChild(modalImg);
-    document.body.appendChild(modal);
-    let i = -1;
-    const open = (j) => {
-      i = j;
-      modalImg.src = srcs[i];
-      modal.style.display = "flex";
-      document.documentElement.style.overflow = "hidden";
-    };
-    const close = () => {
-      modal.style.display = "none";
-      i = -1;
-      document.documentElement.style.overflow = "";
-    };
-    const next = (d) => {
-      i = (i + d + srcs.length) % srcs.length;
-      modalImg.src = srcs[i];
-    };
-    modal.onclick = (e) => e.target === modal && close();
-    window.onkeydown = (e) => {
-      if (modal.style.display !== "flex") return;
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowRight") next(1);
-      if (e.key === "ArrowLeft") next(-1);
-    };
-    srcs.forEach((src, k) => {
-      const img = document.createElement("img");
-      img.src = src;
-      img.style.cssText =
-        "height:45vh;width:auto;cursor:pointer;object-fit:contain;border:1px solid #ccc;border-radius:8px;background:#f9f9f9;transition:transform .2s ease;";
-      img.onmouseover = () => (img.style.transform = "scale(1.02)");
-      img.onmouseout = () => (img.style.transform = "scale(1)");
-      img.onclick = () => open(k);
-      gallery.appendChild(img);
+// === 5. GALERIA ===
+function collectImageSrcs() {
+  const srcs = new Set();
+  document.querySelectorAll("img").forEach((i) => {
+    if (i.src) srcs.add(i.src);
+  });
+  return [...srcs];
+}
+function collectVideoSrcs() {
+  const srcs = new Set();
+  document.querySelectorAll("video").forEach((v) => {
+    [v.src, v.currentSrc].filter(Boolean).forEach((s) => srcs.add(s));
+    v.querySelectorAll("source").forEach((s) => {
+      if (s.src) srcs.add(s.src);
     });
-    gallery.onclick = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.target.tagName === "IMG")
-        window.open(e.target.src, "_blank");
-    };
-    setTimeout(() => window.focus(), 50);
-  })();
+  });
+  return [...srcs];
+}
+function renderGallery(type) {
+  const isVideo = type === "video";
+  const srcs = isVideo ? collectVideoSrcs() : collectImageSrcs();
+  const label = isVideo ? "vídeos" : "fotos";
+
+  document.head.innerHTML = "";
+  document.body.innerHTML = "";
+
+  const h = document.createElement("h2");
+  h.textContent = `Galeria de ${label} (${srcs.length})`;
+  h.style.cssText = "font-family:sans-serif;text-align:center;margin:20px 0;";
+  document.body.appendChild(h);
+
+  const gallery = document.createElement("div");
+  gallery.style.cssText =
+    "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;padding:20px;";
+  document.body.appendChild(gallery);
+
+  const modal = document.createElement("div");
+  modal.style.cssText =
+    "display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);justify-content:center;align-items:center;z-index:9999;cursor:pointer;padding:2vh;";
+
+  const modalMedia = document.createElement(isVideo ? "video" : "img");
+  modalMedia.style.cssText =
+    "max-height:96vh;max-width:96vw;object-fit:contain;border-radius:8px;box-shadow:0 0 30px rgba(0,0,0,0.6);";
+  if (isVideo) modalMedia.controls = true;
+  modal.appendChild(modalMedia);
+  document.body.appendChild(modal);
+
+  let i = -1;
+  const show = (j) => {
+    i = j;
+    modalMedia.src = srcs[i];
+    if (isVideo) modalMedia.load();
+    modal.style.display = "flex";
+    document.documentElement.style.overflow = "hidden";
+  };
+  const close = () => {
+    if (isVideo) modalMedia.pause();
+    modal.style.display = "none";
+    i = -1;
+    document.documentElement.style.overflow = "";
+  };
+  const next = (d) => {
+    if (isVideo) modalMedia.pause();
+    i = (i + d + srcs.length) % srcs.length;
+    show(i);
+  };
+
+  modal.onclick = (e) => e.target === modal && close();
+  window.onkeydown = (e) => {
+    if (modal.style.display !== "flex") return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowRight") next(1);
+    if (e.key === "ArrowLeft") next(-1);
+  };
+
+  const thumbStyle =
+    "height:45vh;width:auto;cursor:pointer;object-fit:contain;border:1px solid #ccc;border-radius:8px;background:#f9f9f9;transition:transform .2s ease;";
+
+  srcs.forEach((src, k) => {
+    const thumb = document.createElement(isVideo ? "video" : "img");
+    thumb.src = src;
+    if (isVideo) {
+      thumb.preload = "metadata";
+      thumb.muted = true;
+    }
+    thumb.style.cssText = thumbStyle;
+    thumb.onmouseover = () => (thumb.style.transform = "scale(1.02)");
+    thumb.onmouseout = () => (thumb.style.transform = "scale(1)");
+    thumb.onclick = () => show(k);
+    gallery.appendChild(thumb);
+  });
+
+  gallery.onclick = (e) => {
+    const tag = e.target.tagName;
+    if ((e.ctrlKey || e.metaKey) && (tag === "IMG" || tag === "VIDEO"))
+      window.open(e.target.src, "_blank");
+  };
+
+  setTimeout(() => window.focus(), 50);
+}
+function galeriaFotos() {
+  renderGallery("image");
+}
+function galeriaVideos() {
+  renderGallery("video");
 }
 
 // === LISTENER ===
 chrome.runtime.onMessage.addListener((m) => {
   if (m.cmd === "darkOn") darkOn();
   if (m.cmd === "darkOff") darkOff();
-  if (m.cmd === "galeria") galeria();
+  if (m.cmd === "galeriaFotos") galeriaFotos();
+  if (m.cmd === "galeriaVideos") galeriaVideos();
   if (m.cmd === "unfollowers") unfollowers();
   if (m.cmd === "loadAll") loadAll();
 
@@ -256,8 +325,10 @@ document.addEventListener(
       return;
 
     const shortcuts = {
-      g: galeria,
+      g: galeriaFotos,
+      e: galeriaVideos,
       v: toggleVidLivres,
+      o: openPlayingVideoInNewTab,
     };
     const action = shortcuts[e.key.toLowerCase()];
     if (!action) return;
