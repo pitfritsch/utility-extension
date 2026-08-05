@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Super Tools",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Noturno | Galeria | Vídeos | Unfollowers | B3",
   "icons": { "128": "icon.png" },
   "action": { "default_popup": "popup.html" },
@@ -17,6 +17,12 @@
         "https://www.investidor.b3.com.br/*"
       ],
       "js": ["b3-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["keep-playing-hook.js"],
       "run_at": "document_start",
       "world": "MAIN"
     },

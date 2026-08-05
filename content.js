@@ -17,8 +17,16 @@ function darkOff() {
   document.getElementById("dark")?.remove();
 }
 
-// === 2. VÍDEOS LIVRES — EXATAMENTE O QUE VOCÊ COLA NO CONSOLE ===
+// === 2. VÍDEOS LIVRES — controles + manter tocando ao mudar de guia ===
 let vidObserver = null;
+const KEEP_PLAYING_EVENT = "__stVidKeepPlaying";
+
+function setKeepPlaying(on) {
+  document.documentElement.dispatchEvent(
+    new CustomEvent(KEEP_PLAYING_EVENT, { detail: { on: !!on } }),
+  );
+}
+
 function enableVideoControlsAndClean() {
   document.querySelectorAll("video").forEach((v) => {
     if (!v.hasAttribute("data-controls-enabled")) {
@@ -32,12 +40,14 @@ function enableVideoControlsAndClean() {
     .forEach((div) => div.remove());
 }
 function vidOnEnable() {
+  setKeepPlaying(true);
   if (vidObserver) return;
   enableVideoControlsAndClean();
   vidObserver = new MutationObserver(enableVideoControlsAndClean);
   vidObserver.observe(document.body, { childList: true, subtree: true });
 }
 function vidOffDisable() {
+  setKeepPlaying(false);
   vidObserver?.disconnect();
   vidObserver = null;
   document.querySelectorAll("video").forEach((v) => {
@@ -47,8 +57,10 @@ function vidOffDisable() {
   });
 }
 function toggleVidLivres() {
-  if (vidObserver) vidOffDisable();
-  else vidOnEnable();
+  const turningOn = !vidObserver;
+  if (turningOn) vidOnEnable();
+  else vidOffDisable();
+  chrome.storage.sync.set({ vidOn: turningOn });
 }
 function getVideoSrc(video) {
   if (video.currentSrc) return video.currentSrc;
@@ -338,3 +350,9 @@ document.addEventListener(
   },
   true,
 );
+
+// Restaura estado salvo (controles + keep-playing)
+chrome.storage.sync.get(["vidOn", "darkOn"], (d) => {
+  if (d.vidOn) vidOnEnable();
+  if (d.darkOn) darkOn();
+});
