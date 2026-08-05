@@ -57,7 +57,7 @@ function getVideoSrc(video) {
 }
 function openPlayingVideoInNewTab() {
   const playing = [...document.querySelectorAll("video")].filter(
-    (v) => !v.paused && !v.ended && v.readyState >= 2
+    (v) => !v.paused && !v.ended && v.readyState >= 2,
   );
   if (!playing.length) return alert("Nenhum vídeo reproduzindo.");
   const video = playing.reduce((best, v) => {
@@ -135,7 +135,7 @@ function unfollowers() {
         ? `<h2>${t} (${a.length})</h2><div class="g">${a
             .map(
               (u) =>
-                `<a href="https://instagram.com/${u.n}" target="_blank" class="c"><img src="${u.p}" class="i"><span>@${u.n}</span></a>`
+                `<a href="https://instagram.com/${u.n}" target="_blank" class="c"><img src="${u.p}" class="i"><span>@${u.n}</span></a>`,
             )
             .join("")}</div>`
         : `<h2>${t} (0)</h2><p>Zero unfollowers! 🎉</p>`;
@@ -144,9 +144,9 @@ function unfollowers() {
     document.body.innerHTML = `<div style="max-width:1100px;margin:auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 4px 20px #0002">
       <h1>Unfollowers Check</h1><p>Followers: ${d.cf} │ Seguindo: ${d.cg}</p>
       ${sec("Não te seguem de volta", d.unf)}${sec(
-      "Você não segue de volta",
-      d.fan
-    )}
+        "Você não segue de volta",
+        d.fan,
+      )}
     </div>`;
     document.title = "Unfollowers";
   };
@@ -174,7 +174,7 @@ function unfollowers() {
 async function loadAll() {
   while (true) {
     const botao = Array.from(
-      document.querySelectorAll('button, div[role="button"]')
+      document.querySelectorAll('button, div[role="button"]'),
     ).find((el) => (el.innerText || "").trim() === "Carregar mais mídias");
     if (!botao) break;
     botao.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -336,5 +336,5 @@ document.addEventListener(
     e.preventDefault();
     action();
   },
-  true
+  true,
 );

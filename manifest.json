@@ -1,12 +1,25 @@
 {
   "manifest_version": 3,
   "name": "Super Tools",
-  "version": "1.0",
-  "description": "Noturno | Galeria | Vídeos | Unfollowers",
+  "version": "1.7",
+  "description": "Noturno | Galeria | Vídeos | Unfollowers | B3",
   "icons": { "128": "icon.png" },
   "action": { "default_popup": "popup.html" },
   "permissions": ["scripting", "activeTab", "storage"],
+  "host_permissions": [
+    "https://investidor.b3.com.br/*",
+    "https://www.investidor.b3.com.br/*"
+  ],
   "content_scripts": [
+    {
+      "matches": [
+        "https://investidor.b3.com.br/*",
+        "https://www.investidor.b3.com.br/*"
+      ],
+      "js": ["b3-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
