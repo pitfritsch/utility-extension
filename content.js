@@ -20,11 +20,55 @@ function darkOff() {
 // === 2. VÍDEOS LIVRES — controles + manter tocando ao mudar de guia ===
 let vidObserver = null;
 const KEEP_PLAYING_EVENT = "__stVidKeepPlaying";
+const VID_CONTAIN_STYLE_ID = "st-vid-contain";
 
 function setKeepPlaying(on) {
   document.documentElement.dispatchEvent(
     new CustomEvent(KEEP_PLAYING_EVENT, { detail: { on: !!on } }),
   );
+}
+
+function injectVideoContainStyle() {
+  if (document.getElementById(VID_CONTAIN_STYLE_ID)) return;
+  const s = document.createElement("style");
+  s.id = VID_CONTAIN_STYLE_ID;
+  s.textContent = `
+    video {
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+    video:fullscreen,
+    video:-webkit-full-screen,
+    :fullscreen video,
+    :-webkit-full-screen video {
+      object-fit: contain !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      background: #000 !important;
+    }
+  `;
+  document.documentElement.appendChild(s);
+}
+
+function removeVideoContainStyle() {
+  document.getElementById(VID_CONTAIN_STYLE_ID)?.remove();
+}
+
+function applyVideoContain(v) {
+  v.style.setProperty("object-fit", "contain", "important");
+  v.style.setProperty("background", "#000", "important");
+  v.setAttribute("data-st-contain", "true");
+}
+
+function clearVideoContain(v) {
+  if (!v.hasAttribute("data-st-contain")) return;
+  v.style.removeProperty("object-fit");
+  v.style.removeProperty("background");
+  v.style.removeProperty("width");
+  v.style.removeProperty("height");
+  v.removeAttribute("data-st-contain");
 }
 
 function enableVideoControlsAndClean() {
@@ -34,6 +78,7 @@ function enableVideoControlsAndClean() {
       v.removeAttribute("controlslist");
       v.setAttribute("data-controls-enabled", "true");
     }
+    applyVideoContain(v);
   });
   document
     .querySelectorAll('div[data-visualcompletion="ignore"]')
@@ -41,6 +86,7 @@ function enableVideoControlsAndClean() {
 }
 function vidOnEnable() {
   setKeepPlaying(true);
+  injectVideoContainStyle();
   if (vidObserver) return;
   enableVideoControlsAndClean();
   vidObserver = new MutationObserver(enableVideoControlsAndClean);
@@ -48,12 +94,14 @@ function vidOnEnable() {
 }
 function vidOffDisable() {
   setKeepPlaying(false);
+  removeVideoContainStyle();
   vidObserver?.disconnect();
   vidObserver = null;
   document.querySelectorAll("video").forEach((v) => {
     v.controls = false;
     v.controlsList = "nodownload";
     v.removeAttribute("data-controls-enabled");
+    clearVideoContain(v);
   });
 }
 function toggleVidLivres() {

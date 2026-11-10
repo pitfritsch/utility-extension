@@ -1,0 +1,31 @@
+---
+description: Bump extension version (major.minor.patch) on every change
+alwaysApply: true
+---
+
+# Version bump (obrigatório)
+
+Em **qualquer** alteração de código, config ou comportamento deste repo, atualize a `version` em `manifest.json` no formato **major.minor.patch**.
+
+## Quando bumping o quê
+
+- **patch** (`1.9.0` → `1.9.1`): bugfix, ajuste pequeno, rule/docs que não mudam comportamento do usuário
+- **minor** (`1.9.0` → `1.10.0`): feature ou melhoria visível (atalho, opção, UI, comportamento novo)
+- **major** (`1.9.0` → `2.0.0`): breaking change (remove feature, muda fluxo de forma incompatível)
+
+Se a versão atual tiver só dois segmentos (ex.: `1.9`), normalize para três ao bumping (ex.: `1.9.0` → `1.10.0` ou `1.9.1`).
+
+## Checklist antes de terminar
+
+1. Ler a `version` atual em `manifest.json`
+2. Escolher major / minor / patch conforme o diff
+3. Escrever a nova versão no `manifest.json` na **mesma** alteração
+4. Nunca entregar mudança sem bump
+
+```json
+// ❌ BAD — mudou content.js e esqueceu a version
+"version": "1.9"
+
+// ✅ GOOD — feature → minor
+"version": "1.10.0"
+```

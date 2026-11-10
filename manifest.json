@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Super Tools",
-  "version": "1.8",
+  "version": "1.10.0",
   "description": "Noturno | Galeria | Vídeos | Unfollowers | B3",
   "icons": { "128": "icon.png" },
   "action": { "default_popup": "popup.html" },
